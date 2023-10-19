@@ -8,7 +8,7 @@ function mise_en_forme_tableau(index){
     }
 }
 
-function appel_ajax_ecriture_fichier(){
+function AAEfichier(){
     ensemble_tableau=""
     creation_base_donnees_complete();
     etape_write=2; // etape pour DB RAZ
@@ -26,15 +26,13 @@ function appel_ajax_ecriture_fichier(){
     }
 }
 
-function open_datas_ecriture_php() {
-  let parametres="Gestion_sauve_fichier.php/?name="+name_db+".txt";
+function open_ecriture_php() {
+  let parametres="GestionSfichier.php/?name="+name_db+".txt";
   xhttp = new XMLHttpRequest();
   xhttp.timeout = 15000; // 5 seconds
   xhttp.onload = function() {myFunction_ecriture(this);}
   xhttp.open("POST", parametres, true);
   xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  // let body=JSON.stringify("var1=tableau de texte pour essai&var2=essai encore"); // avec conversion de la variable
-  //xhttp.send("var1=tableaudetextepouressai");
   xhttp.send(ensemble_tableau);
   xhttp.onreadystatechange =  function() {
         reponse_type=xhttp.readyState
@@ -53,8 +51,7 @@ function myFunction_ecriture(php_datas) {
   reponse_php = php_datas.responseText;
 }
 
-function echanges_datas_php_ecriture() {
-    const abort_button=document.getElementById("AbortFonctionAjax")
+function php_ecriture() {
     if (echange_datas_ecriture) {
          switch (etape_write_php) {
             case 0 :
@@ -66,12 +63,13 @@ function echanges_datas_php_ecriture() {
                     }else{
                         etape_write_php=1;
                         fin_chargement_xml=false;
+                        abort_php=false;
                     }
                 }
             break;
             case 1 :
                 try {
-                    open_datas_ecriture_php();
+                    open_ecriture_php();
                     etape_write_php=2;
                     actualprogress=0;
                     multiplicateur=10;
@@ -82,16 +80,16 @@ function echanges_datas_php_ecriture() {
             break;
             case 2 :
                     /* etape transitoire */
+
                     if (reponse_type <4){
                         // attente car transaction en cours
                         actualprogress+=1; /* pour visu barre graph */
                         affiche_progression();
                         if (progression>1){progression=0}
-                        abort_button.addEventListener("click",function(){
+                        if (abort_php){
                             xhttp.abort();
-                            etape_write_php=0;
-                            echange_datas_ecriture=false;
-                        },{once:true},);
+                            abort_php=false;
+                        }
                     }else {
                         etape_write_php=3;
                     }
@@ -101,30 +99,53 @@ function echanges_datas_php_ecriture() {
                     if (reponse_type==4){
                          switch (reponse_status) {
                             case 0 :
-                                message_erreur="time_out server non disponible"
+                                if (langue==2) {
+                                    message_erreur="time_out serveur non disponible";
+                                }else {
+                                    message_erreur="time_out server not available";
+                                }
                                 xhttp.abort();
                                 etape_write_php=99;
                             break;
                             case 403 :
-                                message_erreur="Requete interdite (ecriture)";
+                                if (langue==2) {
+                                    message_erreur="lecture interdite";
+                                }else {
+                                    message_erreur="reading prohibited";
+                                }
                                 xhttp.abort();
                                 etape_write_php=99;
                             break;
                             case 404 :
-                                message_erreur="Page non trouvée - serveur non disponible";
+                                if (langue==2) {
+                                    message_erreur="projet non trouvé - serveur non disponible";
+                                }else {
+                                    message_erreur="project not found - server not available";
+                                }
                                 xhttp.abort();
                                 etape_write_php=99;
                             break;
                             case 200 :
                                 message_erreur="";
+                                if (langue==2) {
+                                    titre="fichier "+name_db+" : ";
+                                    message_erreur="sauvegarde effectuée";
+                                }else {
+                                    titre="file "+name_db+" : ";
+                                    message_erreur="file saved done";
+                                }
+                                Helpmessage_1(message_erreur,titre)
                                 // xhttp.abort();
                                 etape_write_php=100;
+                                abort_php=false;
                             break;
                         }
                     }else{
-                            abort_button.addEventListener("click",function(){xhttp.abort();
-                            },{once:true},)
-                         }
+                            if (abort_php){
+                                xhttp.abort();
+                                abort_php=false;
+                            }
+                        }
             break;
             case 99 :
                 CustomAlert("error on save file step 99 : "+message_erreur);
@@ -134,6 +155,7 @@ function echanges_datas_php_ecriture() {
             case 100 :
                 etape_write_php=0;
                 echange_datas_ecriture=false;
+                abort_php=false;
             break;
         }
     }

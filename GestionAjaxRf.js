@@ -81,8 +81,8 @@ function conversion_tableau(reponse_php_int){
     }
 }
 
-function appel_ajax_lecture_fichier(){
-        if (!onload_donnees_base){ /* verifie si chargemnt non en cours */
+function AALfichier(){
+        if (!onload_donnees_base){ /* verifie si chargement non en cours */
             if (langue==1){
                 titre="READ Project";
                 message_avert="Action witch reset all datas";
@@ -94,7 +94,7 @@ function appel_ajax_lecture_fichier(){
         }
     }
 
-function ajax_lecture_fihier_txt(){
+function ALfichier_txt(){
     document.getElementById('dialogbox').style.display = "none";
     ensemble_tableau=""
     let tableau_int=""
@@ -102,8 +102,8 @@ function ajax_lecture_fihier_txt(){
     etape_read_php=0;
 }
 
-function open_datas_lecture_php() {
-  let parametres="Gestion_lecture_fichier.php/?name="+name_db+".txt";
+function open_lecture_php() {
+  let parametres="GestionLfichier.php/?name="+name_db+".txt";
   xhttp = new XMLHttpRequest();
   xhttp.timeout = 15000; // 5 seconds
   xhttp.onload = function() {myFunction_lecture(this);}
@@ -129,8 +129,7 @@ function myFunction_lecture(php_datas) {
   reponse_php = php_datas.responseText;
 }
 
-function echanges_datas_php_lecture() {
-    const abort_button=document.getElementById("AbortFonctionAjax")
+function php_lecture() {
     if (echange_datas_lecture) {
          switch (etape_read_php) {
             case 0 :
@@ -142,12 +141,13 @@ function echanges_datas_php_lecture() {
                     }else{
                         etape_read_php=1;
                         fin_chargement_xml=false;
+                        abort_php=false;
                     }
                 }
             break;
             case 1 :
                 try {
-                    open_datas_lecture_php();
+                    open_lecture_php();
                     etape_read_php=2;
                     actualprogress=0;
                     multiplicateur=10;
@@ -170,11 +170,10 @@ function echanges_datas_php_lecture() {
                         actualprogress+=1; /* pour visu barre graph */
                         affiche_progression();
                         if (progression>1){progression=0}
-                        abort_button.addEventListener("click",function(){
+                        if (abort_php){
                             xhttp.abort();
-                            etape_read_php=0;
-                            echange_datas_lecture=false;
-                        },{once:true},);
+                            abort_php=false;
+                        }
                     }else {
                         etape_read_php=3;
                     }
@@ -184,7 +183,6 @@ function echanges_datas_php_lecture() {
                     if (reponse_type==4){
                          switch (reponse_status) {
                             case 0 :
-                                message_erreur="time_out serveur non disponible"
                                 if (langue==2) {
                                     message_erreur="time_out serveur non disponible";
                                 }else {
@@ -225,16 +223,16 @@ function echanges_datas_php_lecture() {
                                     recopy_array_2D();
                                     ask_write_parameters=true;
                                     message_erreur="";
-                                    // xhttp.abort();
                                     etape_read_php=4;
                                 }
                             break;
                         }
                     }else{
-                            abort_button.addEventListener("click",function(){
+                            if (abort_php){
                                 xhttp.abort();
-                            },{once:true},)
-                         }
+                                abort_php=false;
+                            }
+                        }
             break;
             case 4 :
                     etape_read_php=100;
@@ -244,6 +242,7 @@ function echanges_datas_php_lecture() {
                     onload_donnees_base=false;
                     actualprogress=0;
                     affiche_progression();
+                    abort_php=false;
             break;
             case 99 :
                 CustomAlert("error on load file step 99 : ",message_erreur);
@@ -255,6 +254,7 @@ function echanges_datas_php_lecture() {
                 etape_read_php=0;
                 echange_datas_lecture=false;
                 transfert_datas_fini=true;
+                abort_php=false;
             break;
         }
     }

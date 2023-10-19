@@ -24,6 +24,7 @@ let etape_write_php=0;
 /* variable global pour lecture fichier avec PHP */
 let echange_datas_lecture=false;
 let etape_read_php=0;
+
 /* variables pour DB */
 /* ----------------- */
 let base_donnees_complete=[];
@@ -198,6 +199,7 @@ let langue=1; /* choix de la langue de départ */
 let reponse_boite=false; /* retour de la boite de dialogue oui ou non */
 
 /* variables pour lecture fichier Txt ou CSV */
+/* ======================================== */
 let brouillon_file=[];
     brouillon_file.push([]);
 let brouillon_file1=[];
@@ -208,6 +210,7 @@ let reader  = new FileReader();
 let file_name_csv=[];
 let load_fichier_en_cours=false;
 let laod_fichier_txt_fini=false;
+let abort_php=false;
 
 function recopy_array_2D(){
     array_tasks_display_save=[];
@@ -653,11 +656,13 @@ function lecture_bp_color_days(){
     couleur_weekend =String(document.getElementById("colorweekend").value);
     couleur_fond_semaine =String(document.getElementById("colorsemaine").value);
 }
+/* aborte les fonctions PHP si demande */
+function AAAbort() {
+    abort_php=true;
+}
 
 /* ======= debut prg principal =======================*/
 function principal(){
-    /* verifie si toutes les pages ont ete chargées */
-    //window.onload = function(e){
     /* init tableau a enlever pas la suite */
     /*=====================================*/
     /* pour demarrage a froid */
@@ -705,21 +710,25 @@ function principal(){
                 axe_du_jour(graphe,drawing_area);
             }
             /* ======== gestion des DB read and write =================== */
-            document.querySelector('button[id="write_db"]').onclick=write_datas;
-            onwrite_datas();
-            document.querySelector('button[id="read_db"]').onclick=read_datas_1;
-            onread_datas();
             /* ======== gestion lecture ecriture fichiers de sauvegarde=== */
-            document.getElementById("Sauvefichier").onclick=appel_ajax_ecriture_fichier;
-            document.getElementById("lecturefichier").onclick=appel_ajax_lecture_fichier;
-            echanges_datas_php_ecriture();
-            echanges_datas_php_lecture();
+            //document.getElementById("Sauvefichier").onclick=appel_ajax_ecriture_fichier;
+            //document.getElementById("lecturefichier").onclick=appel_ajax_lecture_fichier;
+
+            document.getElementById("text31").addEventListener("click",AAEfichier);
+            document.getElementById("text32").addEventListener("click",AALfichier);
+            document.getElementById("text33").addEventListener("click",AAAbort);
+            php_ecriture();
+            php_lecture();
+            document.getElementById("text34").addEventListener("click",write_datas);
+            onwrite_datas();
+            document.getElementById("text35").addEventListener("click",read_datas_1);
+            onread_datas();
             /* ========================================================= */
             /* si pas de lecture ecriture sur DB alors affichage possible des datas sur Iframe ==== */
              if ((transfert_datas_fini ) && (!deplace_iframe)) {
                 /* lecture des BP */
-                document.querySelector('button[id="essai_task"]').onclick=affiche_donnes_diverses;
-                document.querySelector('button[id="Help"]').onclick=read_xml;
+                document.getElementById("text41").addEventListener("click",read_xml);
+                document.getElementById("text42").addEventListener("click",affiche_donnes_diverses);
                 document.querySelector('button[id="newproject"]').onclick=clear_project;
                 document.querySelector('button[id="display_datas"]').onclick=affiche_datas_iframe;
                 document.getElementById("drapeau_F").onclick=langue_Francaise;
@@ -748,7 +757,6 @@ function principal(){
                 }
                 /* lecture souris */
                 listen_mouse_on_canvas(graphe,drawing_area);
-                //listen_mouse_on_page2();
                 listen_mouse_on_page1();
                 lecture_fichier_text();
                 onread_datas_xml();
